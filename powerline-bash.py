@@ -6,7 +6,7 @@ import subprocess
 import sys
 import re
 import argparse
-
+import socket
 
 def warn(msg):
     print '[powerline-bash] ', msg
@@ -37,6 +37,8 @@ class Color:
     VIRTUAL_ENV_BG = 35  # a mid-tone green
     VIRTUAL_ENV_FG = 22
 
+    HOST_BG = 237  # dark grey
+    HOST_FG = 100  # light green
 
 class Powerline:
     symbols = {
@@ -132,9 +134,9 @@ def add_cwd_segment(powerline, cwd, maxdepth, cwd_only=False):
 
     if not cwd_only:
         for n in names[:-1]:
-            powerline.append(Segment(powerline, ' %s ' % n, Color.PATH_FG,
+            powerline.append(Segment(powerline, '%s ' % n, Color.PATH_FG,
                 Color.PATH_BG, powerline.separator_thin, Color.SEPARATOR_FG))
-    powerline.append(Segment(powerline, ' %s ' % names[-1], Color.CWD_FG,
+    powerline.append(Segment(powerline, '%s ' % names[-1], Color.CWD_FG,
         Color.PATH_BG))
 
 
@@ -318,6 +320,14 @@ def get_valid_cwd():
         warn("Your current directory is invalid. Lowest valid directory: " + up)
     return cwd
 
+def add_logname_hostname_segment(powerline):
+    logname = os.getenv("LOGNAME")
+    hostname = socket.gethostname()
+    bg = Color.HOST_BG
+    fg = Color.HOST_FG
+    powerline.append(Segment(powerline, ' %s@%s:' % (logname, hostname), fg, bg))
+    return True
+
 if __name__ == '__main__':
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument('--cwd-only', action='store_true')
@@ -327,6 +337,7 @@ if __name__ == '__main__':
     args = arg_parser.parse_args()
 
     p = Powerline(mode=args.mode, shell=args.shell)
+    add_logname_hostname_segment(p)
     cwd = get_valid_cwd()
     add_virtual_env_segment(p, cwd)
     #p.append(Segment(p, ' \\u ', 250, 240))
